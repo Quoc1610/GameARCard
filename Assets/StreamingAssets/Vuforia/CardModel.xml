@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QCARConfig>
+  <Tracking>
+    <ImageTarget name="Aries" size="1.000000 1.414427" />
+    <ImageTarget name="Pisces" size="1.000000 1.414427" />
+    <ImageTarget name="Sagittarius" size="1.000000 1.414427" />
+    <ImageTarget name="Capricorn" size="1.000000 1.414427" />
+    <ImageTarget name="Scorpion" size="1.000000 1.414427" />
+    <ImageTarget name="Gemini" size="1.000000 1.414427" />
+    <ImageTarget name="Leo" size="1.000000 1.414427" />
+    <ImageTarget name="Virgo" size="1.000000 1.414427" />
+    <ImageTarget name="Cancer" size="1.000000 1.414427" />
+    <ImageTarget name="Aquarius" size="1.000000 1.414427" />
+    <ImageTarget name="Taurus" size="1.000000 1.414427" />
+    <ImageTarget name="Libra" size="1.000000 1.414427" />
+  </Tracking>
+</QCARConfig>
