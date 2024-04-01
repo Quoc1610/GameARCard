@@ -9470,6 +9470,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: UIDeck
       objectReference: {fileID: 0}
+    - target: {fileID: 417091768960634612, guid: 96ed819fa560cf4459ff2462173b8b14, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 529923616915447744, guid: 96ed819fa560cf4459ff2462173b8b14, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
