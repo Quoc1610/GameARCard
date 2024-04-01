@@ -29,51 +29,52 @@ public class LineDrawer : MonoBehaviour
 
         // Get the index of the pressed button
         int buttonIndex = virtualButtons.IndexOf(vb);
-        if (buttonIndex < lastClickedIndex)
+        if (buttonClickCount==0)
         {
-            Debug.LogWarning("Invalid button click order. Resetting drawing.");
-            linePositions.Clear();
-            DestroyImageTarget(lastClickedIndex);
             lastClickedIndex = buttonIndex;
-            return;
-        }
-
-        lastClickedIndex = buttonIndex;
-
-
-        if (buttonIndex >= 0 && buttonClickCount < 2)
-        {
-
+            Debug.Log(buttonIndex);
             buttonClickCount++;
-
-
             Vector3 buttonPos = buttonPositions[buttonIndex].position;
-
-
             linePositions.Add(buttonPos);
 
+        }
+        
+        if (buttonIndex > 0 && buttonClickCount <virtualButtons.Count)
+        {
 
-            lineRenderer.positionCount = buttonClickCount;
-            lsAnimators[buttonIndex].SetTrigger("Pressed");
-            lsAnimators[lastClickedIndex].SetTrigger("Pressed");
-            lineRenderer.SetPositions(linePositions.ToArray());
-
-
+            if (lastClickedIndex != buttonIndex)
+            {
+                buttonClickCount++;
+            }
 
             if (buttonClickCount == 2)
             {
-                Debug.Log("All buttons clicked");
+                Debug.Log("Last "+lastClickedIndex);
+                Debug.Log("Button "+buttonIndex);
+                Vector3 buttonPos = buttonPositions[buttonIndex].position;
+                linePositions.Add(buttonPos);
 
-                buttonClickCount = 0;
+
+                lineRenderer.positionCount = buttonClickCount;
+            
+                lineRenderer.SetPositions(linePositions.ToArray());
                 
-                foreach (var vbtn in virtualButtons)
+                lsAnimators[buttonIndex].SetTrigger("Pressed");
+                lsAnimators[lastClickedIndex].SetTrigger("Pressed");
+
+                if (lastClickedIndex <buttonIndex)
                 {
-                    vbtn.gameObject.SetActive(true);
+                    DestroyImageTarget(buttonIndex);
+                    
                 }
+                else
+                {
+                    DestroyImageTarget(lastClickedIndex);
+                }
+                Debug.Log("All buttons clicked");
             }
 
         }
-        virtualButtons[buttonIndex].gameObject.SetActive(false);
     }
 
     void DestroyImageTarget(int index)
@@ -87,10 +88,12 @@ public class LineDrawer : MonoBehaviour
 
     IEnumerator DelayedDestroy(int index)
     {
+        buttonClickCount = 0;
         lsAnimators[index].SetTrigger("Hit");
-        yield return new WaitForSeconds(10f); // Wait for 1 second
-        lsImageTarget[index].gameObject.SetActive(false);
+        yield return new WaitForSeconds(5f); // Wait for 1 second
+        //lsImageTarget[index].gameObject.SetActive(false);
         linePositions.Clear();
+        
         Debug.Log("Died");
         //lsImageTarget.RemoveAt(index);
     }
