@@ -18,24 +18,26 @@ public class LineDrawer : MonoBehaviour
     private int buttonIndex = -1;
     public UIGameplay uiGameplay;
     private List<Vector3> linePositions = new List<Vector3>();
-    
+    private List<bool> buttonsClicked = new List<bool>();
     [SerializeField] private List<VirtualButtonBehaviour> lsVbType = new List<VirtualButtonBehaviour>();
     private int TypeA = -1;
     private int TypeB = -1;
     private int ScoreA = 0;
     private int ScoreB = 0;
     private int Turn = 1;
+
     void Start()
     {
-        for (int i = 0; i <virtualButtons.Count; i++)
+        for (int i = 0; i < virtualButtons.Count; i++)
         {
             virtualButtons[i].RegisterOnButtonPressed(OnButtonPressed);
+            buttonsClicked.Add(false);
         }
+
         uiGameplay.txtScoreA.text = "SCORE A: " + ScoreA;
         uiGameplay.txtScoreB.text = "SCORE B: " + ScoreB;
         uiGameplay.txtTurn.text = "TURN " + Turn;
         linePositions.Clear();
-        
     }
 
     void RestartGame()
@@ -45,73 +47,80 @@ public class LineDrawer : MonoBehaviour
         uiGameplay.txtScoreA.text = "SCORE A: " + ScoreA;
         uiGameplay.txtScoreB.text = "SCORE B: " + ScoreB;
 
-       
+
         Turn = 1;
         uiGameplay.txtTurn.text = "TURN " + Turn;
 
-       
+
         foreach (var imageTarget in lsImageTarget)
         {
             imageTarget.SetActive(true);
         }
 
-       
+        for (int i = 0; i < buttonsClicked.Count; i++)
+        {
+            buttonsClicked[i] = false;
+        }
         foreach (var vb in virtualButtons)
         {
             vb.enabled = true;
         }
     }
 
-   
 
     public void OnButtonPressed(VirtualButtonBehaviour vb)
     {
         Debug.Log("Button Pressed: " + vb.VirtualButtonName);
 
         // Get the index of the pressed button
-       buttonIndex = virtualButtons.IndexOf(vb);
-        if (buttonClickCount==0)
+        buttonIndex = virtualButtons.IndexOf(vb);
+        if (buttonClickCount == 0)
         {
-            lastClickedIndex = buttonIndex;
-            Debug.Log(buttonIndex);
-            buttonClickCount++;
-            Vector3 buttonPos = buttonPositions[buttonIndex].position;
-            linePositions.Add(buttonPos);
-            TypeA = CheckType(buttonIndex);
+            if (!buttonsClicked[buttonIndex])
+            {
+                lastClickedIndex = buttonIndex;
+                Debug.Log(buttonIndex);
+                buttonClickCount++;
+                Vector3 buttonPos = buttonPositions[buttonIndex].position;
+                linePositions.Add(buttonPos);
+                TypeA = CheckType(buttonIndex);
+                buttonsClicked[buttonIndex] = true;
+            }
         }
-        
-        if (buttonIndex > 0 && buttonClickCount <virtualButtons.Count)
-        {
 
+        if (buttonIndex > 0 && buttonClickCount < virtualButtons.Count)
+        {
             if (lastClickedIndex != buttonIndex)
             {
-                buttonClickCount++;
-                TypeB = CheckType(buttonIndex);
+                if (!buttonsClicked[buttonIndex])
+                {
+                    buttonClickCount++;
+                    TypeB = CheckType(buttonIndex);
+                    buttonsClicked[buttonIndex] = true;
+                }
             }
 
             if (buttonClickCount == 2)
             {
-               
                 //Draw line
                 Vector3 buttonPos = buttonPositions[buttonIndex].position;
                 linePositions.Add(buttonPos);
                 lineRenderer.positionCount = buttonClickCount;
                 lineRenderer.SetPositions(linePositions.ToArray());
-                
-                
+
+
                 //Set anim
                 lsAnimators[buttonIndex].SetTrigger("Pressed");
                 lsAnimators[lastClickedIndex].SetTrigger("Pressed");
-                
+
                 //set win lose +score
-              
+
                 Debug.Log("All buttons clicked");
-                
-                
+
 
                 if (TypeB == TypeA)
                 {
-                    DestroyImageTarget(lastClickedIndex,buttonIndex);
+                    DestroyImageTarget(lastClickedIndex, buttonIndex);
                 }
 
                 if (TypeA == 0 && TypeB != 0)
@@ -122,7 +131,6 @@ public class LineDrawer : MonoBehaviour
                         DestroyImageTarget(buttonIndex);
                         ScoreA++;
                         uiGameplay.txtScoreA.text = "SCORE A: " + ScoreA;
-                        
                     }
                     else
                     {
@@ -147,11 +155,9 @@ public class LineDrawer : MonoBehaviour
                         ScoreB++;
                         uiGameplay.txtScoreB.text = "SCORE B: " + ScoreB;
                     }
-
-                    
                 }
-                
-                if (TypeA == 2 && TypeB != 3)
+
+                if (TypeA == 2 && TypeB != 2)
                 {
                     if (TypeB == 1)
                     {
@@ -166,7 +172,7 @@ public class LineDrawer : MonoBehaviour
                         uiGameplay.txtScoreB.text = "SCORE B: " + ScoreB;
                     }
                 }
-                
+
                 if (TypeA == 3 && TypeB != 3)
                 {
                     if (TypeB == 2)
@@ -183,34 +189,13 @@ public class LineDrawer : MonoBehaviour
                     }
                 }
 
-                changeTurn();
+               
                 buttonClickCount = 0;
             }
 
-            if (Turn == 4)
+            if (Turn > 4)
             {
-                if (ScoreA > ScoreB)
-                {
-                    //A win
-                   
-                    UIManager.Instance.HideUI(UIIndex.UIGameplay);
-                    UIManager.Instance.ShowUI(UIIndex.UIWinLose,new UIWinLoseParam()
-                    {
-                        win=1
-                    });
-                    
-                }
-                else
-                {
-                    
-                    UIManager.Instance.HideUI(UIIndex.UIGameplay);
-                    UIManager.Instance.ShowUI(UIIndex.UIWinLose,new UIWinLoseParam()
-                    {
-                        win=2
-                    });
-                    //B win
-                }
-                RestartGame();
+                StartCoroutine(CheckWinLoseDelay());
             }
         }
     }
@@ -221,6 +206,33 @@ public class LineDrawer : MonoBehaviour
         uiGameplay.txtTurn.text = "TURN " + Turn;
     }
 
+    IEnumerator CheckWinLoseDelay()
+    {
+        yield return new WaitForSeconds(5f);
+
+        if (ScoreA > ScoreB)
+        {
+            //A win
+
+            UIManager.Instance.HideUI(UIIndex.UIGameplay);
+            UIManager.Instance.ShowUI(UIIndex.UIWinLose, new UIWinLoseParam()
+            {
+                win = 1
+            });
+        }
+        else
+        {
+            UIManager.Instance.HideUI(UIIndex.UIGameplay);
+            UIManager.Instance.ShowUI(UIIndex.UIWinLose, new UIWinLoseParam()
+            {
+                win = 2
+            });
+            //B win
+        }
+
+        RestartGame();
+    }
+
     public int CheckType(int index)
     {
         for (int i = 0; i < lsVbType.Count; i++)
@@ -229,22 +241,22 @@ public class LineDrawer : MonoBehaviour
             {
                 if (i < 3)
                 {
-                    Debug.Log(virtualButtons[index].name+" type 1");
+                    Debug.Log(virtualButtons[index].name + " type 1");
                     return 0;
                 }
                 else if (i < 6)
                 {
-                    Debug.Log(virtualButtons[index].name+" type 2");
+                    Debug.Log(virtualButtons[index].name + " type 2");
                     return 1;
                 }
                 else if (i < 9)
                 {
-                    Debug.Log(virtualButtons[index].name+" type 3");
+                    Debug.Log(virtualButtons[index].name + " type 3");
                     return 2;
                 }
                 else
                 {
-                    Debug.Log(virtualButtons[index].name+" type 4");
+                    Debug.Log(virtualButtons[index].name + " type 4");
                     return 3;
                 }
             }
@@ -257,11 +269,11 @@ public class LineDrawer : MonoBehaviour
     {
         lsImageTarget[buttonIndex].gameObject.SetActive(false);
         lsImageTarget[lastClickedIndex].gameObject.SetActive(false);
-    
+
         // Remove the buttons from the list
         virtualButtons[buttonIndex].enabled = false;
         virtualButtons[lastClickedIndex].enabled = false;
-        
+
         // Clear the line positions
         linePositions.Clear();
     }
@@ -270,41 +282,40 @@ public class LineDrawer : MonoBehaviour
     {
         if (index >= 0 && index < lsImageTarget.Count)
         {
-            
             StartCoroutine(DelayedDestroy(index));
-           
         }
     }
-    void DestroyImageTarget(int indexa,int indexb)
+
+    void DestroyImageTarget(int indexa, int indexb)
     {
         if (indexa >= 0 && indexa < lsImageTarget.Count)
         {
-            
-            StartCoroutine(DelayedDestroy(indexa,indexb));
+            StartCoroutine(DelayedDestroy(indexa, indexb));
         }
     }
-    IEnumerator DelayedDestroy(int indexa,int indexb)
+
+    IEnumerator DelayedDestroy(int indexa, int indexb)
     {
         buttonClickCount = 0;
         lsAnimators[indexa].SetTrigger("Hit");
         lsAnimators[indexb].SetTrigger("Hit");
         yield return new WaitForSeconds(5f); // Wait for 1 second
-       
+
         linePositions.Clear();
         ClearFromList();
         Debug.Log("Died");
+        changeTurn();
     }
+
     IEnumerator DelayedDestroy(int index)
     {
         buttonClickCount = 0;
         lsAnimators[index].SetTrigger("Hit");
         yield return new WaitForSeconds(5f); // Wait for 1 second
-       
+
         linePositions.Clear();
         ClearFromList();
         Debug.Log("Died");
-        
-        
-       
+        changeTurn();
     }
 }
