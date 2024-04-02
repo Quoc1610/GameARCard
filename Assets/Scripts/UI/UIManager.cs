@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using TMPro;
+
 namespace Core
 {
     public class UIManager : SingletonMono<UIManager>
@@ -36,6 +38,7 @@ namespace Core
 
         public void Awake()
         {
+            
             Init(null);
             ShowUI(UIIndex.UIMain);
         }
@@ -111,6 +114,7 @@ namespace Core
         UIMain,
         UIDeck,
         UIGameplay,
+        UIWinLose,
         COUNT,
     }
 }
