@@ -115,6 +115,7 @@ namespace Core
         UIDeck,
         UIGameplay,
         UIWinLose,
+        UIPause,
         COUNT,
     }
 }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using Core;
+using Unity.VisualScripting;
 using UnityEngine;
 using Vuforia;
 
@@ -20,12 +21,14 @@ public class LineDrawer : MonoBehaviour
     private List<Vector3> linePositions = new List<Vector3>();
     private List<bool> buttonsClicked = new List<bool>();
     [SerializeField] private List<VirtualButtonBehaviour> lsVbType = new List<VirtualButtonBehaviour>();
+    [SerializeField] private List<GameObject> goChar = new List<GameObject>();
     private int TypeA = -1;
     private int TypeB = -1;
     private int ScoreA = 0;
     private int ScoreB = 0;
     private int Turn = 1;
-
+    private int Clear1 = 0;
+    private int Clear2 = 0;
     void Start()
     {
         for (int i = 0; i < virtualButtons.Count; i++)
@@ -40,7 +43,7 @@ public class LineDrawer : MonoBehaviour
         linePositions.Clear();
     }
 
-    void RestartGame()
+    public void RestartGame()
     {
         ScoreA = 0;
         ScoreB = 0;
@@ -82,7 +85,7 @@ public class LineDrawer : MonoBehaviour
                 Debug.Log(buttonIndex);
                 buttonClickCount++;
                 Vector3 buttonPos = buttonPositions[buttonIndex].position;
-                linePositions.Add(buttonPos);
+                //linePositions.Add(buttonPos);
                 TypeA = CheckType(buttonIndex);
                 buttonsClicked[buttonIndex] = true;
             }
@@ -102,32 +105,44 @@ public class LineDrawer : MonoBehaviour
 
             if (buttonClickCount == 2)
             {
+                Clear1 = buttonIndex;
+                Clear2 = lastClickedIndex;
+                Debug.Log("Index Last"+lastClickedIndex+"Index This"+buttonIndex);
                 //Draw line
                 Vector3 buttonPos = buttonPositions[buttonIndex].position;
-                linePositions.Add(buttonPos);
+                //linePositions.Add(buttonPos);
                 lineRenderer.positionCount = buttonClickCount;
                 lineRenderer.SetPositions(linePositions.ToArray());
 
-
-                //Set anim
-                lsAnimators[buttonIndex].SetTrigger("Pressed");
-                lsAnimators[lastClickedIndex].SetTrigger("Pressed");
-
-                //set win lose +score
-
                 Debug.Log("All buttons clicked");
-
-
+                
+                Vector3 pos1 = goChar[buttonIndex].transform.position;
+                Vector3 pos2 = goChar[lastClickedIndex].transform.position;
+                
+                Vector3 dir1to2 = (pos2 - pos1).normalized;
+                
+                
+                Vector3 dir2to1 = (pos1 - pos2).normalized;
+                
+                goChar[buttonIndex].transform.rotation = Quaternion.LookRotation(dir1to2);
+                goChar[lastClickedIndex].transform.rotation = Quaternion.LookRotation(dir2to1);
+                
+                float distance = Vector3.Distance(pos1, pos2);
+                Debug.Log("Distanced test "+ distance);
                 if (TypeB == TypeA)
                 {
+                    lsAnimators[buttonIndex].SetTrigger("Pressed");
+                    lsAnimators[lastClickedIndex].SetTrigger("Pressed");
                     DestroyImageTarget(lastClickedIndex, buttonIndex);
                 }
 
+                Debug.Log("Type a: " + TypeA + " Type b: " + TypeB);
                 if (TypeA == 0 && TypeB != 0)
                 {
                     if (TypeB == 3)
                     {
                         //A win
+                        lsAnimators[lastClickedIndex].SetTrigger("Pressed");
                         DestroyImageTarget(buttonIndex);
                         ScoreA++;
                         uiGameplay.txtScoreA.text = "SCORE A: " + ScoreA;
@@ -135,6 +150,7 @@ public class LineDrawer : MonoBehaviour
                     else
                     {
                         //A lose
+                        lsAnimators[buttonIndex].SetTrigger("Pressed");
                         DestroyImageTarget(lastClickedIndex);
                         ScoreB++;
                         uiGameplay.txtScoreB.text = "SCORE B: " + ScoreB;
@@ -145,12 +161,15 @@ public class LineDrawer : MonoBehaviour
                 {
                     if (TypeB == 0)
                     {
+                        lsAnimators[lastClickedIndex].SetTrigger("Pressed");
                         DestroyImageTarget(buttonIndex);
                         ScoreA++;
                         uiGameplay.txtScoreA.text = "SCORE A: " + ScoreA;
                     }
                     else
                     {
+                        lsAnimators[buttonIndex].SetTrigger("Pressed");
+                    
                         DestroyImageTarget(lastClickedIndex);
                         ScoreB++;
                         uiGameplay.txtScoreB.text = "SCORE B: " + ScoreB;
@@ -161,12 +180,17 @@ public class LineDrawer : MonoBehaviour
                 {
                     if (TypeB == 1)
                     {
+                        lsAnimators[lastClickedIndex].SetTrigger("Pressed");
+                        
                         DestroyImageTarget(buttonIndex);
                         ScoreA++;
                         uiGameplay.txtScoreA.text = "SCORE A: " + ScoreA;
                     }
                     else
                     {
+                        
+                        lsAnimators[buttonIndex].SetTrigger("Pressed");
+                        
                         DestroyImageTarget(lastClickedIndex);
                         ScoreB++;
                         uiGameplay.txtScoreB.text = "SCORE B: " + ScoreB;
@@ -177,12 +201,14 @@ public class LineDrawer : MonoBehaviour
                 {
                     if (TypeB == 2)
                     {
+                        lsAnimators[lastClickedIndex].SetTrigger("Pressed");
                         DestroyImageTarget(buttonIndex);
                         ScoreA++;
                         uiGameplay.txtScoreA.text = "SCORE A: " + ScoreA;
                     }
                     else
                     {
+                        lsAnimators[buttonIndex].SetTrigger("Pressed");
                         DestroyImageTarget(lastClickedIndex);
                         ScoreB++;
                         uiGameplay.txtScoreB.text = "SCORE B: " + ScoreB;
@@ -208,7 +234,7 @@ public class LineDrawer : MonoBehaviour
 
     IEnumerator CheckWinLoseDelay()
     {
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSecondsRealtime(0f);
 
         if (ScoreA > ScoreB)
         {
@@ -265,15 +291,13 @@ public class LineDrawer : MonoBehaviour
         return -1;
     }
 
-    public void ClearFromList()
+    public void ClearFromList(int a, int b)
     {
-        lsImageTarget[buttonIndex].gameObject.SetActive(false);
-        lsImageTarget[lastClickedIndex].gameObject.SetActive(false);
-
-        // Remove the buttons from the list
-        virtualButtons[buttonIndex].enabled = false;
-        virtualButtons[lastClickedIndex].enabled = false;
-
+        Debug.Log("Index Last"+lastClickedIndex+"Index This"+buttonIndex);
+        lsImageTarget[a].gameObject.SetActive(false);
+        lsImageTarget[b].gameObject.SetActive(false);
+        Clear1 = -1;
+        Clear2 = -1;
         // Clear the line positions
         linePositions.Clear();
     }
@@ -299,22 +323,23 @@ public class LineDrawer : MonoBehaviour
         buttonClickCount = 0;
         lsAnimators[indexa].SetTrigger("Hit");
         lsAnimators[indexb].SetTrigger("Hit");
-        yield return new WaitForSeconds(5f); // Wait for 1 second
-
+        yield return new WaitForSecondsRealtime(5f); // Wait for 1 second
+        
         linePositions.Clear();
-        ClearFromList();
+        ClearFromList(indexa,indexb);
         Debug.Log("Died");
         changeTurn();
     }
 
     IEnumerator DelayedDestroy(int index)
     {
+        yield return new WaitForSecondsRealtime(.5f);
         buttonClickCount = 0;
         lsAnimators[index].SetTrigger("Hit");
-        yield return new WaitForSeconds(5f); // Wait for 1 second
+        yield return new WaitForSecondsRealtime(5f); // Wait for 1 second
 
         linePositions.Clear();
-        ClearFromList();
+        ClearFromList(Clear1,Clear2);
         Debug.Log("Died");
         changeTurn();
     }

@@ -30,7 +30,10 @@ public class UIGameplay : BaseUI
         goGamerule.SetActive(false);
         isClosedRule = true;
     }
-   
-       
+
+    public void OnPause_Clicked()
+    {
+        UIManager.Instance.ShowUI(UIIndex.UIPause);
+    }
     
 }
